@@ -1,0 +1,118 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "garden-01.tmx",
+    "expandedProjectPaths": [
+    ],
+    "exportAsImage.drawTileGrid": true,
+    "exportAsImage.useCurrentScale": false,
+    "file.lastUsedOpenFilter": "Alle Dateien (*)",
+    "fileStates": {
+        "D:/Entwicklung/Tools/Tiled/examples/desert.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "D:/Entwicklung/Tools/Tiled/examples/hexagonal-mini.tmx": {
+            "scale": 1.6845360824742266,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 270.40085679314564,
+                "y": 126.74112607099144
+            }
+        },
+        "D:/Entwicklung/Tools/Tiled/examples/hexagonal-mini.tmx#hex mini": {
+            "scaleInDock": 1
+        },
+        "D:/Entwicklung/Tools/Tiled/examples/isometric_grass_and_water.tmx": {
+            "scale": 0.55575,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 801.6194331983806,
+                "y": 393.16239316239324
+            }
+        },
+        "D:/Entwicklung/Tools/Tiled/examples/isometric_grass_and_water.tmx#isometric_grass_and_water": {
+            "scaleInDock": 1
+        },
+        "D:/Entwicklung/Tools/Tiled/examples/orthogonal-outside.tmx#outdoor": {
+            "scaleInDock": 1
+        },
+        "D:/Entwicklung/Tools/Tiled/examples/perspective_walls.tmx": {
+            "scale": 0.8026341463414634,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 497.7361127993193,
+                "y": 480.293545642397
+            }
+        },
+        "D:/Entwicklung/Tools/Tiled/examples/perspective_walls.tsx": {
+            "scaleInDock": 1
+        },
+        "D:/Entwicklung/Tools/Tiled/examples/test_hexagonal_tile_60x60x30.tmx": {
+            "scale": 0.6688617886178861,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 432.07730643004743,
+                "y": 615.2242615777319
+            }
+        },
+        "D:/Entwicklung/Tools/Tiled/examples/test_hexagonal_tile_60x60x30.tmx#test_hexagonal_tile_60x60x30": {
+            "scaleInDock": 1
+        },
+        "D:/Projekte/game/phaser/leaf-blower-phaser-js/assets/tiles/lpc-tile-atlas/terrain_atlas.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "base_out_atlas.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "garden-01.tmx": {
+            "scale": 1,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 390,
+                "y": 506.5
+            }
+        },
+        "garden-01.tmx#terrain_atlas": {
+            "scaleInDock": 1
+        },
+        "garden-02.tmx": {
+            "scale": 0.8034179687499999,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 496.6281755196306,
+                "y": 515.9207487541024
+            }
+        },
+        "terrain_atlas.tsx": {
+            "scaleInDock": 0.5,
+            "scaleInEditor": 1
+        }
+    },
+    "map.height": 32,
+    "map.lastUsedFormat": "tmx",
+    "map.width": 32,
+    "openFiles": [
+        "garden-01.tmx"
+    ],
+    "project": "garden.tiled-project",
+    "recentFiles": [
+        "garden-01.tmx",
+        "base_out_atlas.tsx",
+        "garden-02.tmx",
+        "terrain_atlas.tsx",
+        "D:/Projekte/game/phaser/leaf-blower-phaser-js/assets/tiles/lpc-tile-atlas/Test-01.tmx",
+        "D:/Projekte/game/phaser/leaf-blower-phaser-js/assets/tiles/lpc-tile-atlas/terrain_atlas.tsx",
+        "D:/Entwicklung/Tools/Tiled/examples/orthogonal-outside.tmx",
+        "D:/Entwicklung/Tools/Tiled/examples/test_hexagonal_tile_60x60x30.tmx",
+        "D:/Entwicklung/Tools/Tiled/examples/perspective_walls.tmx",
+        "D:/Entwicklung/Tools/Tiled/examples/isometric_grass_and_water.tmx",
+        "D:/Entwicklung/Tools/Tiled/examples/hexagonal-mini.tmx",
+        "D:/Entwicklung/Tools/Tiled/examples/desert.tmx"
+    ],
+    "tileset.lastUsedFormat": "tsx"
+}
