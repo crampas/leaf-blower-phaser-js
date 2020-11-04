@@ -15,15 +15,27 @@ export class BootScene extends Phaser.Scene {
     private man: Phaser.Physics.Arcade.Sprite;
     private windParticleEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
     private leafs: Phaser.Physics.Arcade.Sprite[] = [];
+    private text: Phaser.GameObjects.Text;
+    private sweeper: Phaser.Physics.Arcade.Sprite;
+    private sweeperEngine: Phaser.Sound.BaseSound;
+    private sweeperText: Phaser.GameObjects.Text;
 
+    private slurp: Phaser.Sound.BaseSound;
+    private cleaner: Phaser.Sound.BaseSound;
+    private cleanerOn: boolean = false;
+    private cleanerVolume: number = 0;
+
+    private playerAh: Phaser.Sound.BaseSound;
+
+    private collectedLeafs: number = 0;
 
     constructor() {
         super(sceneConfig);
     }
 
     public preload(): void {
-        const loadingText = this.add.text(100, 100, 'Starting...').setFontSize(32);
-
+        this.text = this.add.text(100, 100, 'Starting...').setFontSize(32).setDepth(100);
+        this.sweeperText = this.add.text(0, 0, '').setFontSize(32).setDepth(100);
 
         // const line = this.add.line(200, 200, 0, 0, 50, 10, 0xff0000);
         // line.rotation = 0.5;
@@ -34,12 +46,26 @@ export class BootScene extends Phaser.Scene {
         this.load.image('leaf', 'assets/sprites/leaf-4.png');
         this.load.image('background', 'assets/tiles/garden/garden-01-background.png');
         this.load.image('foreground', 'assets/tiles/garden/garden-01-foreground.png');
+        this.load.image('sweeper', 'assets/sprites/sweeper.png');
         
         this.load.spritesheet('leafs', 'assets/sprites/leaf-4.png', { frameWidth: 32, frameHeight: 32 });
+
+
+        this.load.audio('slurp', 'assets/audio/squit.wav');
+        this.load.audio('sweeper-engine', 'assets/audio/diesel-loop.mp3');
+        this.load.audio('cleaner', 'assets/audio/leaf-blower-loop.mp3');
+        
+        this.load.audio('playerAh', 'assets/audio/player-ah.mp3');
     }
 
     public create(): void {
     
+        this.slurp = this.sound.add('slurp');
+        this.sweeperEngine = this.sound.add('sweeper-engine', {loop: true});
+        this.cleaner = this.sound.add('cleaner', {loop: true});
+
+        this.playerAh = this.sound.add('playerAh');
+
         this.physics.world.setBounds(0, 0, 1024, 1024);
         this.cameras.main.setBounds(0, 0, 1024, 1024);
 
@@ -59,13 +85,16 @@ export class BootScene extends Phaser.Scene {
             leaf.setFriction(1000, 1000);
             leaf.setMass(0.01);
             leaf.setBounce(0.5, 0.5);
-            leaf.frame
+            leaf.setRotation(Math.random() * Math.PI);
             this.leafs.push(leaf);
         }
 
 
         this.man = this.physics.add.sprite(200, 200, 'man');
         this.cameras.main.startFollow(this.man, true);
+
+        this.sweeper = this.physics.add.sprite(370, 2000, 'sweeper');
+        this.sweeper.setVelocityY(130);
 
         const winParticleManager = this.add.particles('particle');
         this.windParticleEmitter = winParticleManager.createEmitter({
@@ -79,9 +108,45 @@ export class BootScene extends Phaser.Scene {
         this.add.image(0, 0, 'foreground').setScale(1, 1).setOrigin(0, 0);
     }
 
+
+
+
+
     public update(): void {
         // Every frame, we create a new velocity for the sprite based on what keys the player is holding down.
     
+        this.text.setScrollFactor(0);
+        // this.text.setPosition(this.cameras.main.getBounds().x + 50, this.cameras.main.getBounds().x + 50);
+        this.text.setText(this.collectedLeafs.toString());
+
+        this.sweeperText.setPosition(this.sweeper.x, this.sweeper.y);
+
+        if (this.sweeper.y > 1050) {
+            this.sweeperText.setText('');
+            this.sweeper.y = 0;
+            this.sweeperEngine.play();
+        }
+
+
+        for (let leaf of this.leafs) {
+            if (!leaf.visible) {
+                continue;
+            }
+            const sweeperDistance = Phaser.Math.Distance.Between(this.sweeper.x, this.sweeper.y, leaf.x, leaf.y);
+            if (sweeperDistance < 40) {
+                leaf.setVisible(false);
+                this.slurp.play();
+                this.collectedLeafs++;
+            }
+        }
+
+        const manSweeperDistance = Phaser.Math.Distance.Between(this.man.x, this.man.y, this.sweeper.x, this.sweeper.y);
+        if (manSweeperDistance < 20) {
+            this.man.setPosition(100, 100);
+            this.playerAh.play();
+            this.sweeperText.setText('Pass doch auf du Depp ...');
+        }
+        this.sweeperEngine.setVolume(1 / manSweeperDistance * 100);
 
 
         // Phaser.Math.Angle.WrapDegrees(this.man.rotation);
@@ -96,10 +161,6 @@ export class BootScene extends Phaser.Scene {
         // this.windParticleEmitter.setSpeedY(0);
         this.windParticleEmitter.setPosition(this.man.x, this.man.y);
 
-
-        for (let leaf of this.leafs) {
-            leaf.setAcceleration(0, 0);
-        }
 
         if (this.cursorKeys.left.isDown) {
             if (this.cursorKeys.shift.isDown) {
@@ -124,6 +185,7 @@ export class BootScene extends Phaser.Scene {
             this.man.setVelocity(-push.x, -push.y);
         }
         if (this.cursorKeys.space.isDown) {
+            this.switchCleaner(true);
             for (let leaf of this.leafs) {
                 const leafAngle = Phaser.Math.Angle.Between(this.man.x, this.man.y, leaf.x, leaf.y);
                 if (leafAngle > manAngle - 0.4 && leafAngle < manAngle + 0.4) {
@@ -140,6 +202,8 @@ export class BootScene extends Phaser.Scene {
             const particleAngle = manAngle / Math.PI * 180.0;
             this.windParticleEmitter.setAngle({min: particleAngle - 10, max: particleAngle + 10});
             this.windParticleEmitter.setSpeed({min: 100, max: 500});
+        } else {
+            this.switchCleaner(false);
         }
 
         this.man.setRotation(Phaser.Math.Angle.Wrap(manAngle));
@@ -157,6 +221,22 @@ export class BootScene extends Phaser.Scene {
     }
     
 
+    private switchCleaner(value: boolean) {
+        if (value) {
+            this.cleanerVolume = Math.min(this.cleanerVolume + 10, 100);
+        } else {
+            this.cleanerVolume = Math.max(this.cleanerVolume - 5, 0);
+        }
+        if (value && !this.cleanerOn) {
+            this.cleaner.play();
+        }
+        if (!value && this.cleanerOn) {
+            // this.cleaner.stop();
+        }
+        this.cleaner.setVolume(this.cleanerVolume / 100.0);
+
+        this.cleanerOn = value;
+    }
     
 }  
 
