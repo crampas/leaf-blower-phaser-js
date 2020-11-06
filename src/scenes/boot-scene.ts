@@ -22,8 +22,8 @@ export class BootScene extends Phaser.Scene {
     private sweeperEngine: Phaser.Sound.BaseSound;
     private sweeperText: Phaser.GameObjects.Text;
 
-    private slurp: Phaser.Sound.BaseSound;
-    private cleaner: Phaser.Sound.BaseSound;
+    private sweeperSlurp: Phaser.Sound.BaseSound;
+    private playerBlower: Phaser.Sound.BaseSound;
     private cleanerOn: boolean = false;
     private cleanerVolume: number = 0;
 
@@ -37,7 +37,7 @@ export class BootScene extends Phaser.Scene {
     }
 
     public preload(): void {
-        this.text = this.add.text(100, 100, 'Starting...').setFontSize(32).setDepth(100);
+        this.text = this.add.text(100, 100, 'Starting...').setFontSize(32).setDepth(100).setScrollFactor(0);
         this.sweeperText = this.add.text(0, 0, '').setFontSize(32).setDepth(100);
 
         // const line = this.add.line(200, 200, 0, 0, 50, 10, 0xff0000);
@@ -60,27 +60,25 @@ export class BootScene extends Phaser.Scene {
     }
 
     public create(): void {
-    
-        this.slurp = this.sound.add('slurp');
-        this.sweeperEngine = this.sound.add('sweeper-engine', {loop: true});
-        this.cleaner = this.sound.add('cleaner', {loop: true});
 
+        this.cursorKeys = this.input.keyboard.createCursorKeys();
+
+        this.sweeperSlurp = this.sound.add('slurp');
+        this.sweeperEngine = this.sound.add('sweeper-engine', {loop: true});
+
+        this.playerBlower = this.sound.add('cleaner', {loop: true});
         this.playerAh = this.sound.add('playerAh');
 
         this.physics.world.setBounds(0, 0, 1024, 1024);
         this.cameras.main.setBounds(0, 0, 1024, 1024);
+        this.cameras.main.x = Math.max((this.game.canvas.width - 1024) / 2, 0);
+        this.cameras.main.y = Math.max((this.game.canvas.height - 1024) / 2, 0);
 
-
-        // this.scale.setZoom(2);
-        
-
-        // This is a nice helper Phaser provides to create listeners for some of the most common keys.
-        this.cursorKeys = this.input.keyboard.createCursorKeys();
 
         this.add.image(0, 0, 'background').setScale(1, 1).setOrigin(0, 0);
 
         for (let index = 0; index < 2000; index++) {
-            const leaf = this.physics.add.sprite(Math.random() * 1500, Math.random() * 700, "leafs", index % 4);
+            const leaf = this.physics.add.sprite(Math.random() * 1024, Math.random() * 1024, "leafs", index % 4);
             leaf.setCollideWorldBounds(true);
             leaf.setDrag(100, 100);
             leaf.setFriction(1000, 1000);
@@ -111,9 +109,21 @@ export class BootScene extends Phaser.Scene {
 
         this.add.image(0, 0, 'foreground').setScale(1, 1).setOrigin(0, 0);
 
-        this.cleaner.play({volume: 0});
+        this.playerBlower.play({volume: 0});
 
+        this.sweeperText.setVisible(false);
+        this.sweeperText.setText('Pass doch auf du Depp ...');
+        
         this.physics.add.collider(this.player, this.obstacles);
+        this.physics.add.overlap(this.player, this.sweeper, () => {
+            this.player.setPosition(this.player.x + 40, this.player.y);
+            this.playerAh.play();
+            this.sweeperText.setPosition(this.sweeper.x, this.sweeper.y);
+            this.sweeperText.setVisible(true);
+            this.time.addEvent({delay: 3000}).callback = () => {
+                this.sweeperText.setVisible(false);
+            };
+        });
     }
 
 
@@ -121,13 +131,11 @@ export class BootScene extends Phaser.Scene {
 
 
     public update(): void {
-        // Every frame, we create a new velocity for the sprite based on what keys the player is holding down.
     
-        this.text.setScrollFactor(0);
-        // this.text.setPosition(this.cameras.main.getBounds().x + 50, this.cameras.main.getBounds().x + 50);
         this.text.setText([
             'Leafs: ' + this.collectedLeafs.toString(),
-            'Energy:' + this.energy
+            'Energy:' + this.energy,
+//            'Angle:' + this.player.angle
         ]);
 
         if (this.sweeper.y > 1050) {
@@ -143,21 +151,12 @@ export class BootScene extends Phaser.Scene {
             const sweeperDistance = Phaser.Math.Distance.Between(this.sweeper.x, this.sweeper.y, leaf.x, leaf.y);
             if (sweeperDistance < 40) {
                 leaf.setVisible(false);
-                this.slurp.play();
+                this.sweeperSlurp.play();
                 this.collectedLeafs++;
             }
         }
 
         const manSweeperDistance = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.sweeper.x, this.sweeper.y);
-        if (manSweeperDistance < 20) {
-            this.player.setPosition(this.player.x + 40, this.player.y);
-            this.playerAh.play();
-            this.sweeperText.setPosition(this.sweeper.x, this.sweeper.y);
-            this.sweeperText.setText('Pass doch auf du Depp ...');
-            this.time.addEvent({delay: 3000}).callback = () => {
-                this.sweeperText.setVisible(false);
-            };
-        }
         this.sweeperEngine.setVolume(1 / manSweeperDistance * 100);
 
 
@@ -206,7 +205,6 @@ export class BootScene extends Phaser.Scene {
                     leaf.setVelocity(ref * (leaf.x - this.player.x), ref * (leaf.y - this.player.y));
                 }
             }
-
             
             this.windParticleEmitter.setPosition(this.player.x + push.x * 50, this.player.y + push.y * 50);
             this.windParticleEmitter.on = true;
@@ -234,8 +232,8 @@ export class BootScene extends Phaser.Scene {
         } else {
             this.cleanerVolume = Math.max(this.cleanerVolume - 3, 0);
         }
-        this.cleaner.setVolume(this.cleanerVolume / 100.0);
-        this.cleaner.setRate(Math.max(this.cleanerVolume / 100.0, 0.1));
+        this.playerBlower.setVolume(this.cleanerVolume / 100.0);
+        this.playerBlower.setRate(Math.max(this.cleanerVolume / 100.0, 0.1));
 
         this.cleanerOn = value;
     }
