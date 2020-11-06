@@ -12,7 +12,9 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
 export class BootScene extends Phaser.Scene {
 
     private cursorKeys: Phaser.Types.Input.Keyboard.CursorKeys;
-    private man: Phaser.Physics.Arcade.Sprite;
+    private player: Phaser.Physics.Arcade.Sprite;
+    private obstacles: Phaser.Physics.Arcade.StaticGroup;
+
     private windParticleEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
     private leafs: Phaser.Physics.Arcade.Sprite[] = [];
     private text: Phaser.GameObjects.Text;
@@ -28,6 +30,7 @@ export class BootScene extends Phaser.Scene {
     private playerAh: Phaser.Sound.BaseSound;
 
     private collectedLeafs: number = 0;
+    private energy: number = 3000;
 
     constructor() {
         super(sceneConfig);
@@ -41,7 +44,7 @@ export class BootScene extends Phaser.Scene {
         // line.rotation = 0.5;
 
         // this.load.image('man', 'assets/sprites/character.png');
-        this.load.image('man', 'assets/sprites/arrow-block.png');
+        this.load.image('man', 'assets/sprites/player.png');
         this.load.image('particle', 'assets/sprites/air-particle.png');
         this.load.image('leaf', 'assets/sprites/leaf-4.png');
         this.load.image('background', 'assets/tiles/garden/garden-01-background.png');
@@ -50,11 +53,9 @@ export class BootScene extends Phaser.Scene {
         
         this.load.spritesheet('leafs', 'assets/sprites/leaf-4.png', { frameWidth: 32, frameHeight: 32 });
 
-
         this.load.audio('slurp', 'assets/audio/squit.wav');
         this.load.audio('sweeper-engine', 'assets/audio/diesel-loop.mp3');
         this.load.audio('cleaner', 'assets/audio/leaf-blower-loop.mp3');
-        
         this.load.audio('playerAh', 'assets/audio/player-ah.mp3');
     }
 
@@ -90,22 +91,29 @@ export class BootScene extends Phaser.Scene {
         }
 
 
-        this.man = this.physics.add.sprite(200, 200, 'man');
-        this.cameras.main.startFollow(this.man, true);
+        this.player = this.physics.add.sprite(450, 400, 'man');
+        this.player.setCollideWorldBounds(true);
+        this.cameras.main.startFollow(this.player, true);
+
+        this.obstacles = this.physics.add.staticGroup();
+        const obstacle1 = this.add.zone(432, 208, 32, 32);
+        // this.add.rectangle(432, 208, 32, 32, 0x80ffffff);
+        this.obstacles.add(obstacle1);
 
         this.sweeper = this.physics.add.sprite(370, 2000, 'sweeper');
         this.sweeper.setVelocityY(130);
 
         const winParticleManager = this.add.particles('particle');
-        this.windParticleEmitter = winParticleManager.createEmitter({
-            x: 200,
-            y: 200,
-        });
+        this.windParticleEmitter = winParticleManager.createEmitter({on: false});
         this.windParticleEmitter.setFrequency(0);
         this.windParticleEmitter.setBlendMode(Phaser.BlendModes.NORMAL);
         this.windParticleEmitter.acceleration = true;
 
         this.add.image(0, 0, 'foreground').setScale(1, 1).setOrigin(0, 0);
+
+        this.cleaner.play({volume: 0});
+
+        this.physics.add.collider(this.player, this.obstacles);
     }
 
 
@@ -117,12 +125,12 @@ export class BootScene extends Phaser.Scene {
     
         this.text.setScrollFactor(0);
         // this.text.setPosition(this.cameras.main.getBounds().x + 50, this.cameras.main.getBounds().x + 50);
-        this.text.setText(this.collectedLeafs.toString());
-
-        this.sweeperText.setPosition(this.sweeper.x, this.sweeper.y);
+        this.text.setText([
+            'Leafs: ' + this.collectedLeafs.toString(),
+            'Energy:' + this.energy
+        ]);
 
         if (this.sweeper.y > 1050) {
-            this.sweeperText.setText('');
             this.sweeper.y = 0;
             this.sweeperEngine.play();
         }
@@ -140,31 +148,33 @@ export class BootScene extends Phaser.Scene {
             }
         }
 
-        const manSweeperDistance = Phaser.Math.Distance.Between(this.man.x, this.man.y, this.sweeper.x, this.sweeper.y);
+        const manSweeperDistance = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.sweeper.x, this.sweeper.y);
         if (manSweeperDistance < 20) {
-            this.man.setPosition(100, 100);
+            this.player.setPosition(this.player.x + 40, this.player.y);
             this.playerAh.play();
+            this.sweeperText.setPosition(this.sweeper.x, this.sweeper.y);
             this.sweeperText.setText('Pass doch auf du Depp ...');
+            this.time.addEvent({delay: 3000}).callback = () => {
+                this.sweeperText.setVisible(false);
+            };
         }
         this.sweeperEngine.setVolume(1 / manSweeperDistance * 100);
 
 
         // Phaser.Math.Angle.WrapDegrees(this.man.rotation);
-        let manAngle = this.man.rotation;
-        let push = new Phaser.Math.Vector2(100, 0);
+        let manAngle = this.player.rotation;
+        let push = new Phaser.Math.Vector2(1, 0);
         push.setAngle(manAngle);
-        
-        // this.windParticleEmitter.active = false;
-        this.windParticleEmitter.on = false;
 
-        this.man.setVelocity(0);
-        // this.windParticleEmitter.setSpeedY(0);
-        this.windParticleEmitter.setPosition(this.man.x, this.man.y);
+        this.player.setVelocity(0);
+
+        this.windParticleEmitter.on = false;
+        
 
 
         if (this.cursorKeys.left.isDown) {
             if (this.cursorKeys.shift.isDown) {
-
+                this.player.setVelocity(push.y * 100, -push.x * 100);    
             } 
             else {
                 manAngle -= 0.05;            
@@ -172,50 +182,47 @@ export class BootScene extends Phaser.Scene {
         }
         if (this.cursorKeys.right.isDown) {
             if (this.cursorKeys.shift.isDown) {
-
+                this.player.setVelocity(-push.y * 100, push.x * 100);    
             } 
             else {
                 manAngle += 0.05;
             }
         }
         if (this.cursorKeys.up.isDown) {            
-            this.man.setVelocity(push.x, push.y);
+            this.player.setVelocity(push.x * 100, push.y * 100);
         }
         if (this.cursorKeys.down.isDown) {
-            this.man.setVelocity(-push.x, -push.y);
+            this.player.setVelocity(-push.x * 100, -push.y * 100);
         }
-        if (this.cursorKeys.space.isDown) {
+        if (this.cursorKeys.space.isDown && this.energy > 0) {
+            this.energy--;
             this.switchCleaner(true);
             for (let leaf of this.leafs) {
-                const leafAngle = Phaser.Math.Angle.Between(this.man.x, this.man.y, leaf.x, leaf.y);
+                const leafAngle = Phaser.Math.Angle.Between(this.player.x, this.player.y, leaf.x, leaf.y);
                 if (leafAngle > manAngle - 0.4 && leafAngle < manAngle + 0.4) {
-                    const leafDistance = Phaser.Math.Distance.Between(this.man.x, this.man.y, leaf.x, leaf.y);
+                    const leafDistance = Phaser.Math.Distance.Between(this.player.x, this.player.y, leaf.x, leaf.y);
                     const lefDistanceFactor = leafDistance / 50 + 1.0;
                     const ref = Math.random() / (lefDistanceFactor * lefDistanceFactor * leafDistance) * 2000;
-                    // leaf.setAcceleration(ref * push.x, ref * push.y);
-                    // leaf.setAcceleration(ref * (leaf.x - this.man.x), ref * (leaf.y - this.man.y));
-                    leaf.setVelocity(ref * (leaf.x - this.man.x), ref * (leaf.y - this.man.y));
+                    leaf.setVelocity(ref * (leaf.x - this.player.x), ref * (leaf.y - this.player.y));
                 }
             }
 
+            
+            this.windParticleEmitter.setPosition(this.player.x + push.x * 50, this.player.y + push.y * 50);
             this.windParticleEmitter.on = true;
             const particleAngle = manAngle / Math.PI * 180.0;
             this.windParticleEmitter.setAngle({min: particleAngle - 10, max: particleAngle + 10});
             this.windParticleEmitter.setSpeed({min: 100, max: 500});
+            this.windParticleEmitter.setScale(0.5); 
         } else {
             this.switchCleaner(false);
         }
 
-        this.man.setRotation(Phaser.Math.Angle.Wrap(manAngle));
-        // this.man.rotation = Phaser.Math.Angle.Wrap(manAngle);
+        this.player.setRotation(Phaser.Math.Angle.Wrap(manAngle));
 
         this.windParticleEmitter.forEachAlive((particle, particleEmitter) => {
-            if (particle.x < 0) {
-                particle.velocityX = -particle.velocityX;
-            }
-            if (particle.y < 0) {
-                particle.velocityY = -particle.velocityY;
-            }
+            particle.scaleX = Math.max(particle.lifeT, 0.5);
+            particle.scaleY = Math.max(particle.lifeT, 0.5);
         }, null);
 
     }
@@ -225,15 +232,10 @@ export class BootScene extends Phaser.Scene {
         if (value) {
             this.cleanerVolume = Math.min(this.cleanerVolume + 10, 100);
         } else {
-            this.cleanerVolume = Math.max(this.cleanerVolume - 5, 0);
-        }
-        if (value && !this.cleanerOn) {
-            this.cleaner.play();
-        }
-        if (!value && this.cleanerOn) {
-            // this.cleaner.stop();
+            this.cleanerVolume = Math.max(this.cleanerVolume - 3, 0);
         }
         this.cleaner.setVolume(this.cleanerVolume / 100.0);
+        this.cleaner.setRate(Math.max(this.cleanerVolume / 100.0, 0.1));
 
         this.cleanerOn = value;
     }

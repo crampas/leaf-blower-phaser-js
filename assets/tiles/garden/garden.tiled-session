@@ -6,7 +6,7 @@
     "activeFile": "garden-01.tmx",
     "expandedProjectPaths": [
     ],
-    "exportAsImage.drawTileGrid": true,
+    "exportAsImage.drawTileGrid": false,
     "exportAsImage.useCurrentScale": false,
     "file.lastUsedOpenFilter": "Alle Dateien (*)",
     "fileStates": {
@@ -71,10 +71,10 @@
         },
         "garden-01.tmx": {
             "scale": 1,
-            "selectedLayer": 1,
+            "selectedLayer": 3,
             "viewCenter": {
-                "x": 390,
-                "y": 506.5
+                "x": 414,
+                "y": 232.5
             }
         },
         "garden-01.tmx#terrain_atlas": {
