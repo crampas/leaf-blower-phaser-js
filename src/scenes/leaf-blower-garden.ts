@@ -3,13 +3,13 @@ import * as Phaser from 'phaser';
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
     active: false,
     visible: false,
-    key: 'Boot',
+    key: 'LeafBlowerGarden',
 };
   
 /**
  * The initial scene that loads all necessary assets to the game and displays a loading bar.
  */
-export class BootScene extends Phaser.Scene {
+export class LeafBlowerGarden extends Phaser.Scene {
 
     private cursorKeys: Phaser.Types.Input.Keyboard.CursorKeys;
     private player: Phaser.Physics.Arcade.Sprite;

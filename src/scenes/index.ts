@@ -1,3 +1,4 @@
-import { BootScene } from './boot-scene';
+import { Intro } from './intro';
+import { LeafBlowerGarden } from './leaf-blower-garden';
 
-export default [BootScene];
+export default [Intro, LeafBlowerGarden];
