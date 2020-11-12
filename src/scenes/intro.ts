@@ -3,14 +3,69 @@ import * as Phaser from 'phaser';
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
     active: false,
     visible: false,
-    key: 'Intro',
+    key: 'Intro'
 };
-  
+
+
+
+class FlowPart {
+
+    public repeatCallback: (time: number, index: number) => void;
+
+    public constructor(public name: string, public duration: number, public next: string) {
+        
+    }
+
+    public repeat(callback: (time: number, index: number) => void): FlowPart {
+        this.repeatCallback = callback;
+        return this;
+    }
+
+}
+
+class Flow {
+    private parts: FlowPart[] = [];
+    private currentPart: FlowPart = null;
+    private currentStart: number = 0;
+    private currentIndex: number = 0;
+    private currentDuration: number = 0;
+
+    public add(part: FlowPart) {
+        this.parts.push(part);
+    }
+
+    public createPart(name: string, duration: number, next: string): FlowPart {
+        const part = new FlowPart(name, duration, next);
+        this.parts.push(part);
+        return part;
+    }
+
+    public step(time: number) {
+        if (this.currentPart === null) {
+            this.currentPart = this.parts[0];
+            this.currentStart = time;
+            this.currentIndex = 0;
+        } 
+        else {
+            const currentDuration = time - this.currentStart;
+            if (currentDuration > this.currentPart.duration) {
+                this.currentPart = this.parts.find(part => part.name == this.currentPart.next);
+                this.currentStart = time;
+                this.currentIndex = 0;
+            }
+        }
+        this.currentPart.repeatCallback(time - this.currentStart, this.currentIndex);
+        this.currentIndex++;
+    }
+}
+
 export class Intro extends Phaser.Scene {
 
     private cursorKeys: Phaser.Types.Input.Keyboard.CursorKeys;
     private leafs: Phaser.Physics.Arcade.Sprite[] = [];
     private text: Phaser.GameObjects.Text;
+
+    private workflow: Flow = new Flow();
 
     constructor() {
         super(sceneConfig);
@@ -42,27 +97,47 @@ export class Intro extends Phaser.Scene {
             'Press Space to start'
         ]);
 
-        // .setDisplaySize(1024, 1024).setOrigin(0, 0);
 
-        this.time.addEvent({delay: 100, loop: true}).callback = () => {
-            if (this.leafs.length > 5000) {
-                return;
-            }
+        this.workflow.createPart('create', 10000, 'move').repeat(() => {
             const leaf = this.physics.add.sprite(Math.random() * this.game.canvas.width, Math.random() * this.game.canvas.height, 
                 "intro-leafs", Math.floor(Math.random() * 5.0));
-            leaf.setCollideWorldBounds(true);
-            leaf.setDrag(100, 100);
-            leaf.setFriction(1000, 1000);
             leaf.setMass(0.01);
+            leaf.setDrag(10, 10);
             leaf.setBounce(0.5, 0.5);
             leaf.setRotation(Math.random() * Math.PI);
             this.leafs.push(leaf);
-        };
+        });
+        this.workflow.createPart('return', 10000, 'move').repeat((time, index) => {
+            if (index < this.leafs.length) {
+                const leaf = this.leafs[index];
+                leaf.setVelocity(0, 0);
+                if (leaf.x < 0 || leaf.x > this.game.canvas.width || 
+                    leaf.y < 0 || leaf.y > this.game.canvas.height) {
+                    leaf.setPosition(Math.random() * this.game.canvas.width, Math.random() * this.game.canvas.height);           
+                }
+            }
+        });        
+        this.workflow.createPart('move', -1, 'wait').repeat(() => {
+            this.cameras.main.shake(500);
+            this.leafs.forEach(leaf => {
+                leaf.setVelocity(Math.random() * 800 - 400, Math.random() * 800 - 400);
+            });
+        });        
+        this.workflow.createPart('wait', 5000, 'return').repeat(() => {
+        });        
+        
+
 
     }
 
-
     public update(): void {
+
+        this.workflow.step(this.time.now);
+
+        if (this.cursorKeys.up.isDown) {
+            this.cameras.main.shake(1000);
+            const leaf = this.leafs.pop();
+        }
         if (this.cursorKeys.space.isDown) {
             this.scene.start('LeafBlowerGarden');            
         }
