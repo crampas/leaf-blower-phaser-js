@@ -82,12 +82,12 @@ export class Intro extends Phaser.Scene {
         this.cursorKeys = this.input.keyboard.createCursorKeys();
 
         const image = this.add.image(0, 0, 'intro-image').setOrigin(0, 0);
-        const scaleX = Math.min(this.game.canvas.width, 1024) / image.width;
-        image.setScale(scaleX);
-        const offsetX = (this.game.canvas.width - image.width * scaleX) / 2;
-        image.setX(offsetX);
 
-        this.text = this.add.text(offsetX + 300, 400, '').setFontSize(48).setFontStyle('bold').setColor('#a01003').setDepth(100).setScrollFactor(0);
+        const scale = Math.max(this.game.canvas.width / image.width, this.game.canvas.height / image.height);
+        image.setScale(scale);
+
+        const fontSize = this.game.canvas.width / 32;
+        this.text = this.add.text(0, 0, '').setFontSize(fontSize).setFontStyle('bold').setDepth(100).setScrollFactor(0);
         this.text.setText([
             'Ich habe einen Freund',
             'der ist Laubbläser',
@@ -96,7 +96,11 @@ export class Intro extends Phaser.Scene {
             ' Space to blow',
             'Press Space to start'
         ]);
+        this.text.setFill('#a01003');
         this.text.setStroke('#ffffff', 4);
+        this.text.x = this.game.canvas.width - this.text.width - fontSize; 
+        this.text.y = this.game.canvas.height - this.text.height - fontSize; 
+        
 
 
         this.workflow.createPart('create', 10000, 'move').repeat(() => {
@@ -144,7 +148,7 @@ export class Intro extends Phaser.Scene {
             }
         })
 
-        if (this.cursorKeys.space.isDown) {
+        if (this.cursorKeys.space.isDown || this.input.activePointer.isDown) {
             this.scene.start('LeafBlowerGarden');
         }
     }

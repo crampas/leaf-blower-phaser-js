@@ -39,8 +39,9 @@ export class LeafBlowerGarden extends Phaser.Scene {
     }
 
     public preload(): void {
-        this.text = this.add.text(100, 100, 'Starting...').setFontSize(32).setDepth(100).setScrollFactor(0);
-        this.sweeperText = this.add.text(0, 0, '').setFontSize(32).setDepth(100);
+        const fontSize = Math.min(this.game.canvas.width, 1024) / 32;
+        this.text = this.add.text(fontSize, fontSize, 'Starting...').setFontSize(fontSize).setDepth(100).setScrollFactor(0);
+        this.sweeperText = this.add.text(0, 0, '').setFontSize(fontSize).setDepth(100);
 
         this.load.image('man', 'assets/sprites/player.png');
         this.load.image('particle', 'assets/sprites/air-particle.png');
@@ -228,6 +229,7 @@ export class LeafBlowerGarden extends Phaser.Scene {
             // `Player: ${this.player.x}, ${this.player.y}`,
             // `Pointer: ${this.input.activePointer.worldX}, ${this.input.activePointer.worldY}`,
             // `Diff: ${pointerDiff}`,
+            // `Camera: ${this.cameras.main.scrollX}, ${this.cameras.main.scrollY}`,
         ]);
 
     }
