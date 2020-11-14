@@ -32,6 +32,8 @@ export class LeafBlowerGarden extends Phaser.Scene {
     private collectedLeafs: number = 0;
     private energy: number = 3000;
 
+    private readonly BLOWER_OPENING_ANGLE = 0.2;
+
     constructor() {
         super(sceneConfig);
     }
@@ -40,10 +42,6 @@ export class LeafBlowerGarden extends Phaser.Scene {
         this.text = this.add.text(100, 100, 'Starting...').setFontSize(32).setDepth(100).setScrollFactor(0);
         this.sweeperText = this.add.text(0, 0, '').setFontSize(32).setDepth(100);
 
-        // const line = this.add.line(200, 200, 0, 0, 50, 10, 0xff0000);
-        // line.rotation = 0.5;
-
-        // this.load.image('man', 'assets/sprites/character.png');
         this.load.image('man', 'assets/sprites/player.png');
         this.load.image('particle', 'assets/sprites/air-particle.png');
         this.load.image('leaf', 'assets/sprites/leaf-4.png');
@@ -132,12 +130,6 @@ export class LeafBlowerGarden extends Phaser.Scene {
 
     public update(): void {
     
-        this.text.setText([
-            'Leafs: ' + this.collectedLeafs.toString(),
-            'Energy:' + this.energy,
-//            'Angle:' + this.player.angle
-        ]);
-
         if (this.sweeper.y > 1050) {
             this.sweeper.y = 0;
             this.sweeperEngine.play();
@@ -198,7 +190,8 @@ export class LeafBlowerGarden extends Phaser.Scene {
             this.switchCleaner(true);
             for (let leaf of this.leafs) {
                 const leafAngle = Phaser.Math.Angle.Between(this.player.x, this.player.y, leaf.x, leaf.y);
-                if (leafAngle > manAngle - 0.4 && leafAngle < manAngle + 0.4) {
+                const diffAngle = this.angleDiff(leafAngle, manAngle);
+                if (diffAngle > -this.BLOWER_OPENING_ANGLE && diffAngle < this.BLOWER_OPENING_ANGLE) {
                     const leafDistance = Phaser.Math.Distance.Between(this.player.x, this.player.y, leaf.x, leaf.y);
                     const lefDistanceFactor = leafDistance / 50 + 1.0;
                     const ref = Math.random() / (lefDistanceFactor * lefDistanceFactor * leafDistance) * 2000;
@@ -208,8 +201,9 @@ export class LeafBlowerGarden extends Phaser.Scene {
             
             this.windParticleEmitter.setPosition(this.player.x + push.x * 50, this.player.y + push.y * 50);
             this.windParticleEmitter.on = true;
-            const particleAngle = manAngle / Math.PI * 180.0;
-            this.windParticleEmitter.setAngle({min: particleAngle - 10, max: particleAngle + 10});
+            const particleAngleMin = manAngle - this.BLOWER_OPENING_ANGLE;
+            const particleAngleMax = manAngle + this.BLOWER_OPENING_ANGLE;
+            this.windParticleEmitter.setAngle({min: Phaser.Math.RadToDeg(particleAngleMin), max: Phaser.Math.RadToDeg(particleAngleMax)});
             this.windParticleEmitter.setSpeed({min: 100, max: 500});
             this.windParticleEmitter.setScale(0.5); 
         } else {
@@ -223,8 +217,27 @@ export class LeafBlowerGarden extends Phaser.Scene {
             particle.scaleY = Math.max(particle.lifeT, 0.5);
         }, null);
 
+
+        const pointerAngle = Phaser.Math.Angle.Between(this.player.x, this.player.y, this.input.activePointer.worldX, this.input.activePointer.worldY);
+        const pointerDiff = Phaser.Math.Angle.ShortestBetween(pointerAngle, manAngle);
+
+        this.text.setText([
+            'Leafs: ' + this.collectedLeafs.toString(),
+            'Energy:' + this.energy,
+            // `Angle: ${pointerAngle}`,
+            // `Player: ${this.player.x}, ${this.player.y}`,
+            // `Pointer: ${this.input.activePointer.worldX}, ${this.input.activePointer.worldY}`,
+            // `Diff: ${pointerDiff}`,
+        ]);
+
     }
-    
+
+    private angleDiff(angle1: number, angle2: number): number {
+        let diff = angle2 - angle1;
+        diff = diff < -Math.PI ? diff + Math.PI + Math.PI : diff;
+        diff = diff > Math.PI ? diff - Math.PI - Math.PI : diff;
+        return diff;
+    }
 
     private switchCleaner(value: boolean) {
         if (value) {

@@ -96,6 +96,7 @@ export class Intro extends Phaser.Scene {
             ' Space to blow',
             'Press Space to start'
         ]);
+        this.text.setStroke('#ffffff', 4);
 
 
         this.workflow.createPart('create', 10000, 'move').repeat(() => {
@@ -105,6 +106,8 @@ export class Intro extends Phaser.Scene {
             leaf.setDrag(10, 10);
             leaf.setBounce(0.5, 0.5);
             leaf.setRotation(Math.random() * Math.PI);
+
+            leaf.setScale(Math.random() * 10.0);
             this.leafs.push(leaf);
         });
         this.workflow.createPart('return', 10000, 'move').repeat((time, index) => {
@@ -114,6 +117,7 @@ export class Intro extends Phaser.Scene {
                 if (leaf.x < 0 || leaf.x > this.game.canvas.width || 
                     leaf.y < 0 || leaf.y > this.game.canvas.height) {
                     leaf.setPosition(Math.random() * this.game.canvas.width, Math.random() * this.game.canvas.height);           
+                    leaf.setScale(Math.random() * 10.0);
                 }
             }
         });        
@@ -134,12 +138,14 @@ export class Intro extends Phaser.Scene {
 
         this.workflow.step(this.time.now);
 
-        if (this.cursorKeys.up.isDown) {
-            this.cameras.main.shake(1000);
-            const leaf = this.leafs.pop();
-        }
+        this.leafs.forEach(leaf => {
+            if (leaf.scale > 1.0) {
+                leaf.setScale((leaf.scale - 1.0) * 0.99 + 1.0);
+            }
+        })
+
         if (this.cursorKeys.space.isDown) {
-            this.scene.start('LeafBlowerGarden');            
+            this.scene.start('LeafBlowerGarden');
         }
     }
     
