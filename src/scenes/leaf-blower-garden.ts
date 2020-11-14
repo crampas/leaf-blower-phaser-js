@@ -5,7 +5,7 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
     visible: false,
     key: 'LeafBlowerGarden',
 };
-  
+
 /**
  * The initial scene that loads all necessary assets to the game and displays a loading bar.
  */
@@ -15,7 +15,6 @@ export class LeafBlowerGarden extends Phaser.Scene {
     private player: Phaser.Physics.Arcade.Sprite;
     private obstacles: Phaser.Physics.Arcade.StaticGroup;
 
-    private windParticleEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
     private leafs: Phaser.Physics.Arcade.Sprite[] = [];
     private text: Phaser.GameObjects.Text;
     private sweeper: Phaser.Physics.Arcade.Sprite;
@@ -23,7 +22,6 @@ export class LeafBlowerGarden extends Phaser.Scene {
     private sweeperText: Phaser.GameObjects.Text;
 
     private sweeperSlurp: Phaser.Sound.BaseSound;
-    private playerBlower: Phaser.Sound.BaseSound;
     private cleanerOn: boolean = false;
     private cleanerVolume: number = 0;
 
@@ -32,10 +30,14 @@ export class LeafBlowerGarden extends Phaser.Scene {
     private collectedLeafs: number = 0;
     private energy: number = 3000;
 
-    private readonly BLOWER_OPENING_ANGLE = 0.2;
+    public static readonly BLOWER_OPENING_ANGLE = 0.2;
+
+    private blower: LeafBlower;
 
     constructor() {
         super(sceneConfig);
+
+        this.blower = new LeafBlower(this, this.leafs);
     }
 
     public preload(): void {
@@ -44,18 +46,18 @@ export class LeafBlowerGarden extends Phaser.Scene {
         this.sweeperText = this.add.text(0, 0, '').setFontSize(fontSize).setDepth(100);
 
         this.load.image('man', 'assets/sprites/player.png');
-        this.load.image('particle', 'assets/sprites/air-particle.png');
         this.load.image('leaf', 'assets/sprites/leaf-4.png');
         this.load.image('background', 'assets/tiles/garden/garden-01-background.png');
         this.load.image('foreground', 'assets/tiles/garden/garden-01-foreground.png');
         this.load.image('sweeper', 'assets/sprites/sweeper.png');
-        
+
         this.load.spritesheet('leafs', 'assets/sprites/leaf-4.png', { frameWidth: 32, frameHeight: 32 });
 
         this.load.audio('slurp', 'assets/audio/squit.wav');
         this.load.audio('sweeper-engine', 'assets/audio/diesel-loop.mp3');
-        this.load.audio('cleaner', 'assets/audio/leaf-blower-loop.mp3');
         this.load.audio('playerAh', 'assets/audio/player-ah.mp3');
+
+        this.blower.preload();
     }
 
     public create(): void {
@@ -65,7 +67,6 @@ export class LeafBlowerGarden extends Phaser.Scene {
         this.sweeperSlurp = this.sound.add('slurp');
         this.sweeperEngine = this.sound.add('sweeper-engine', {loop: true});
 
-        this.playerBlower = this.sound.add('cleaner', {loop: true});
         this.playerAh = this.sound.add('playerAh');
 
         this.physics.world.setBounds(0, 0, 1024, 1024);
@@ -100,19 +101,15 @@ export class LeafBlowerGarden extends Phaser.Scene {
         this.sweeper = this.physics.add.sprite(370, 2000, 'sweeper');
         this.sweeper.setVelocityY(130);
 
-        const winParticleManager = this.add.particles('particle');
-        this.windParticleEmitter = winParticleManager.createEmitter({on: false});
-        this.windParticleEmitter.setFrequency(0);
-        this.windParticleEmitter.setBlendMode(Phaser.BlendModes.NORMAL);
-        this.windParticleEmitter.acceleration = true;
+        this.blower.create();
+        this.blower.player = this.player;
 
         this.add.image(0, 0, 'foreground').setScale(1, 1).setOrigin(0, 0);
 
-        this.playerBlower.play({volume: 0});
 
         this.sweeperText.setVisible(false);
         this.sweeperText.setText('Pass doch auf du Depp ...');
-        
+
         this.physics.add.collider(this.player, this.obstacles);
         this.physics.add.overlap(this.player, this.sweeper, () => {
             this.player.setPosition(this.player.x + 40, this.player.y);
@@ -130,7 +127,7 @@ export class LeafBlowerGarden extends Phaser.Scene {
 
 
     public update(): void {
-    
+
         if (this.sweeper.y > 1050) {
             this.sweeper.y = 0;
             this.sweeperEngine.play();
@@ -153,70 +150,47 @@ export class LeafBlowerGarden extends Phaser.Scene {
         this.sweeperEngine.setVolume(1 / manSweeperDistance * 100);
 
 
-        // Phaser.Math.Angle.WrapDegrees(this.man.rotation);
         let manAngle = this.player.rotation;
         let push = new Phaser.Math.Vector2(1, 0);
         push.setAngle(manAngle);
 
         this.player.setVelocity(0);
 
-        this.windParticleEmitter.on = false;
-        
+
 
 
         if (this.cursorKeys.left.isDown) {
             if (this.cursorKeys.shift.isDown) {
-                this.player.setVelocity(push.y * 100, -push.x * 100);    
-            } 
+                this.player.setVelocity(push.y * 100, -push.x * 100);
+            }
             else {
-                manAngle -= 0.05;            
+                manAngle -= 0.05;
             }
         }
         if (this.cursorKeys.right.isDown) {
             if (this.cursorKeys.shift.isDown) {
-                this.player.setVelocity(-push.y * 100, push.x * 100);    
-            } 
+                this.player.setVelocity(-push.y * 100, push.x * 100);
+            }
             else {
                 manAngle += 0.05;
             }
         }
-        if (this.cursorKeys.up.isDown) {            
+        if (this.cursorKeys.up.isDown) {
             this.player.setVelocity(push.x * 100, push.y * 100);
         }
         if (this.cursorKeys.down.isDown) {
             this.player.setVelocity(-push.x * 100, -push.y * 100);
         }
+
+        this.blower.isBlowing = false;
         if (this.cursorKeys.space.isDown && this.energy > 0) {
             this.energy--;
-            this.switchCleaner(true);
-            for (let leaf of this.leafs) {
-                const leafAngle = Phaser.Math.Angle.Between(this.player.x, this.player.y, leaf.x, leaf.y);
-                const diffAngle = this.angleDiff(leafAngle, manAngle);
-                if (diffAngle > -this.BLOWER_OPENING_ANGLE && diffAngle < this.BLOWER_OPENING_ANGLE) {
-                    const leafDistance = Phaser.Math.Distance.Between(this.player.x, this.player.y, leaf.x, leaf.y);
-                    const lefDistanceFactor = leafDistance / 50 + 1.0;
-                    const ref = Math.random() / (lefDistanceFactor * lefDistanceFactor * leafDistance) * 2000;
-                    leaf.setVelocity(ref * (leaf.x - this.player.x), ref * (leaf.y - this.player.y));
-                }
-            }
-            
-            this.windParticleEmitter.setPosition(this.player.x + push.x * 50, this.player.y + push.y * 50);
-            this.windParticleEmitter.on = true;
-            const particleAngleMin = manAngle - this.BLOWER_OPENING_ANGLE;
-            const particleAngleMax = manAngle + this.BLOWER_OPENING_ANGLE;
-            this.windParticleEmitter.setAngle({min: Phaser.Math.RadToDeg(particleAngleMin), max: Phaser.Math.RadToDeg(particleAngleMax)});
-            this.windParticleEmitter.setSpeed({min: 100, max: 500});
-            this.windParticleEmitter.setScale(0.5); 
-        } else {
-            this.switchCleaner(false);
+            this.blower.isBlowing = true;
         }
 
         this.player.setRotation(Phaser.Math.Angle.Wrap(manAngle));
 
-        this.windParticleEmitter.forEachAlive((particle, particleEmitter) => {
-            particle.scaleX = Math.max(particle.lifeT, 0.5);
-            particle.scaleY = Math.max(particle.lifeT, 0.5);
-        }, null);
+        this.blower.update();
 
 
         const pointerAngle = Phaser.Math.Angle.Between(this.player.x, this.player.y, this.input.activePointer.worldX, this.input.activePointer.worldY);
@@ -234,14 +208,91 @@ export class LeafBlowerGarden extends Phaser.Scene {
 
     }
 
-    private angleDiff(angle1: number, angle2: number): number {
-        let diff = angle2 - angle1;
-        diff = diff < -Math.PI ? diff + Math.PI + Math.PI : diff;
-        diff = diff > Math.PI ? diff - Math.PI - Math.PI : diff;
-        return diff;
+
+}
+
+
+function angleDiff(angle1: number, angle2: number): number {
+    let diff = angle2 - angle1;
+    diff = diff < -Math.PI ? diff + Math.PI + Math.PI : diff;
+    diff = diff > Math.PI ? diff - Math.PI - Math.PI : diff;
+    return diff;
+}
+
+
+class LeafBlower {
+
+    private playerBlower: Phaser.Sound.BaseSound;
+    private windParticleEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
+
+    public player: Phaser.Physics.Arcade.Sprite;
+    public isBlowing: boolean;
+    public cleanerVolume: number = 0;
+
+
+    public constructor(public scene: Phaser.Scene, public leafs: Phaser.Physics.Arcade.Sprite[]) {
     }
 
-    private switchCleaner(value: boolean) {
+    preload() {
+        this.scene.load.audio('cleaner', 'assets/audio/leaf-blower-loop.mp3');
+        this.scene.load.image('particle', 'assets/sprites/air-particle.png');
+    }
+
+    public create(): void {
+        const winParticleManager = this.scene.add.particles('particle');
+        this.windParticleEmitter = winParticleManager.createEmitter({on: false});
+        this.windParticleEmitter.setFrequency(0);
+        this.windParticleEmitter.setBlendMode(Phaser.BlendModes.NORMAL);
+        this.windParticleEmitter.acceleration = true;
+
+        this.playerBlower = this.scene.sound.add('cleaner', {loop: true});
+        this.playerBlower.play({volume: 0});
+    }
+
+    public updateBlowing(): void {
+
+        let push = new Phaser.Math.Vector2(1, 0);
+        push.setAngle(this.player.rotation);
+
+        this.windParticleEmitter.setPosition(this.player.x + push.x * 50, this.player.y + push.y * 50);
+        this.windParticleEmitter.on = true;
+        const particleAngleMin = this.player.rotation - LeafBlowerGarden.BLOWER_OPENING_ANGLE;
+        const particleAngleMax = this.player.rotation + LeafBlowerGarden.BLOWER_OPENING_ANGLE;
+        this.windParticleEmitter.setAngle({min: Phaser.Math.RadToDeg(particleAngleMin), max: Phaser.Math.RadToDeg(particleAngleMax)});
+        this.windParticleEmitter.setSpeed({min: 100, max: 500});
+        this.windParticleEmitter.setScale(0.5);
+
+
+
+        for (let leaf of this.leafs) {
+            const leafAngle = Phaser.Math.Angle.Between(this.player.x, this.player.y, leaf.x, leaf.y);
+            const diffAngle = angleDiff(leafAngle, this.player.rotation);
+            if (diffAngle > -LeafBlowerGarden.BLOWER_OPENING_ANGLE && diffAngle < LeafBlowerGarden.BLOWER_OPENING_ANGLE) {
+                const leafDistance = Phaser.Math.Distance.Between(this.player.x, this.player.y, leaf.x, leaf.y);
+                const lefDistanceFactor = leafDistance / 50 + 1.0;
+                const ref = Math.random() / (lefDistanceFactor * lefDistanceFactor * leafDistance) * 2000;
+                leaf.setVelocity(ref * (leaf.x - this.player.x), ref * (leaf.y - this.player.y));
+            }
+        }
+
+    }
+
+    public update(): void {
+        this.windParticleEmitter.on = false
+        if (this.isBlowing) {
+            this.switchBlowerSound(true);
+            this.updateBlowing();
+        } else {
+            this.switchBlowerSound(false);
+        }
+
+        this.windParticleEmitter.forEachAlive((particle, particleEmitter) => {
+            particle.scaleX = Math.max(particle.lifeT, 0.5);
+            particle.scaleY = Math.max(particle.lifeT, 0.5);
+        }, null);
+    }
+
+    private switchBlowerSound(value: boolean) {
         if (value) {
             this.cleanerVolume = Math.min(this.cleanerVolume + 10, 100);
         } else {
@@ -250,9 +301,7 @@ export class LeafBlowerGarden extends Phaser.Scene {
         this.playerBlower.setVolume(this.cleanerVolume / 100.0);
         this.playerBlower.setRate(Math.max(this.cleanerVolume / 100.0, 0.1));
 
-        this.cleanerOn = value;
+        // this.cleanerOn = value;
     }
-    
-}  
-
+}
 
