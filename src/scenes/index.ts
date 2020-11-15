@@ -1,4 +1,4 @@
-import { Intro } from './intro';
-import { LeafBlowerGarden } from './leaf-blower-garden';
+import { IntroScene } from './intro-scene';
+import { LeafBlowerScene } from './leaf-blower-scene';
 
-export default [Intro, LeafBlowerGarden];
+export default [IntroScene, LeafBlowerScene];

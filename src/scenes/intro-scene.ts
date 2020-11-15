@@ -59,7 +59,7 @@ class Flow {
     }
 }
 
-export class Intro extends Phaser.Scene {
+export class IntroScene extends Phaser.Scene {
 
     private cursorKeys: Phaser.Types.Input.Keyboard.CursorKeys;
     private leafs: Phaser.Physics.Arcade.Sprite[] = [];
@@ -149,7 +149,7 @@ export class Intro extends Phaser.Scene {
         })
 
         if (this.cursorKeys.space.isDown || this.input.activePointer.isDown) {
-            this.scene.start('LeafBlowerGarden');
+            this.scene.start('LeafBlowerScene');
         }
     }
     

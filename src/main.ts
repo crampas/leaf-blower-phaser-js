@@ -2,7 +2,7 @@ import * as Phaser from 'phaser';
 import scenes from './scenes';
 
 const gameConfig: Phaser.Types.Core.GameConfig = {
-  title: 'Sample',
+  title: 'Leaf Blower JS',
  
   type: Phaser.AUTO,
  
