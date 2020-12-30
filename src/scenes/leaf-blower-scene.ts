@@ -37,12 +37,9 @@ export class LeafBlowerScene extends Phaser.Scene {
         this.text = this.add.text(fontSize, fontSize, 'Starting...').setFontSize(fontSize).setDepth(100).setScrollFactor(0);
         this.sweeperText = this.add.text(0, 0, '').setFontSize(fontSize).setDepth(100);
 
-        this.load.image('leaf', 'assets/sprites/leaf-4.png');
         this.load.image('background', 'assets/tiles/garden/garden-01-background.png');
         this.load.image('foreground', 'assets/tiles/garden/garden-01-foreground.png');
-
         this.load.spritesheet('leafs', 'assets/sprites/leaf-4.png', { frameWidth: 32, frameHeight: 32 });
-
 
         this.sweeper.preload();
         this.leafBlower.preload();
@@ -74,26 +71,27 @@ export class LeafBlowerScene extends Phaser.Scene {
         }
 
         this.leafBlower.create();
-        this.cameras.main.startFollow(this.leafBlower.player, true);
+        this.cameras.main.startFollow(this.leafBlower.sprite, true);
 
         this.obstacles = this.physics.add.staticGroup();
         const obstacle1 = this.add.zone(432, 208, 32, 32);
         // this.add.rectangle(432, 208, 32, 32, 0x80ffffff);
-        this.obstacles.add(obstacle1);
-        this.physics.add.collider(this.leafBlower.player, this.obstacles);
+        this.obstacles.add(obstacle1);        
+        this.physics.add.collider(this.leafBlower.sprite, this.obstacles);
 
 
-        this.sweeper.player = this.leafBlower.player;
+        this.sweeper.player = this.leafBlower.sprite;
         this.sweeper.create();
-        this.sweeper.onCollidePlayer = () => {
-            this.leafBlower.player.setPosition(this.leafBlower.player.x + 40, this.leafBlower.player.y);
+
+        this.leafBlower.onCollideWith(this.sweeper.sprite, () => {
+            this.leafBlower.sprite.setPosition(this.leafBlower.sprite.x + 40, this.leafBlower.sprite.y);
             this.playerAh.play();
-            this.sweeperText.setPosition(this.sweeper.sweeper.x, this.sweeper.sweeper.y);
+            this.sweeperText.setPosition(this.sweeper.sprite.x, this.sweeper.sprite.y);
             this.sweeperText.setVisible(true);
             this.time.addEvent({delay: 3000}).callback = () => {
                 this.sweeperText.setVisible(false);
             };
-        }
+        });
 
         this.add.image(0, 0, 'foreground').setScale(1, 1).setOrigin(0, 0);
 

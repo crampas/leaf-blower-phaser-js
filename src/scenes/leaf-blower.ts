@@ -4,7 +4,7 @@ import { LeafBlowerJet } from "./leaf-blower-jet";
 
 export class LeafBlower {
 
-    public player: Phaser.Physics.Arcade.Sprite;
+    public sprite: Phaser.Physics.Arcade.Sprite;
     private leafBlowerJet: LeafBlowerJet;
     public isBlowing: boolean = false;
 
@@ -19,10 +19,10 @@ export class LeafBlower {
     }
 
     public create(): void {
-        this.player = this.scene.physics.add.sprite(450, 400, 'player');
-        this.player.setCollideWorldBounds(true);
+        this.sprite = this.scene.physics.add.sprite(450, 400, 'player');
+        this.sprite.setCollideWorldBounds(true);
 
-        this.leafBlowerJet.player = this.player;
+        this.leafBlowerJet.player = this.sprite;
         this.leafBlowerJet.create();
     }
 
@@ -32,9 +32,13 @@ export class LeafBlower {
     }
 
     public move(playerNewVelocity: Phaser.Math.Vector2, playerNewRotation: number) {
-        playerNewVelocity.rotate(this.player.rotation);
-        this.player.setVelocity(playerNewVelocity.x, playerNewVelocity.y);    
-        this.player.setRotation(Phaser.Math.Angle.Wrap(this.player.rotation + playerNewRotation));
+        playerNewVelocity.rotate(this.sprite.rotation);
+        this.sprite.setVelocity(playerNewVelocity.x, playerNewVelocity.y);    
+        this.sprite.setRotation(Phaser.Math.Angle.Wrap(this.sprite.rotation + playerNewRotation));
+    }
+
+    public onCollideWith(sprite: Phaser.Physics.Arcade.Sprite, handler: () => void) {
+        this.scene.physics.add.overlap(this.sprite, sprite,  handler);
     }
 
 }
