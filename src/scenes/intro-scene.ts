@@ -99,7 +99,7 @@ export class IntroScene extends Phaser.Scene {
     public preload(): void {
         this.load.image('intro-image', 'assets/leaf-blower-into.jpg');
         this.load.spritesheet('intro-leafs', 'assets/sprites/leaf-4.png', { frameWidth: 32, frameHeight: 32 });
-    
+
         for (let i = 0; i < 10; i++) {
             const blower = new LeafBlower(this, this.leafs);
             blower.preload();
@@ -108,7 +108,6 @@ export class IntroScene extends Phaser.Scene {
     }
 
     public create(): void {
-
         this.cursorKeys = this.input.keyboard.createCursorKeys();
 
         const image = this.add.image(0, 0, 'intro-image').setOrigin(0, 0);

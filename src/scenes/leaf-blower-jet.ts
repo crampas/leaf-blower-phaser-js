@@ -23,11 +23,8 @@ export class LeafBlowerJet {
     }
 
     public create(): void {
-        const winParticleManager = this.scene.add.particles('particle');
-        this.windParticleEmitter = winParticleManager.createEmitter({ on: false });
-        this.windParticleEmitter.setFrequency(0);
-        this.windParticleEmitter.setBlendMode(Phaser.BlendModes.NORMAL);
-        this.windParticleEmitter.acceleration = true;
+
+
 
         this.blowerSound = this.scene.sound.add('cleaner', { loop: true }) as Phaser.Sound.WebAudioSound;
         this.blowerSound.play({ volume: 0 });
@@ -35,16 +32,29 @@ export class LeafBlowerJet {
 
     public blow(): void {
 
-        // emit air particles
-        let push = new Phaser.Math.Vector2(1, 0);
-        push.setAngle(this.player.rotation);
-        this.windParticleEmitter.setPosition(this.player.x + push.x * 50, this.player.y + push.y * 50);
-        this.windParticleEmitter.on = true;
         const particleAngleMin = this.player.rotation - LeafBlowerJet.BLOWER_OPENING_ANGLE;
         const particleAngleMax = this.player.rotation + LeafBlowerJet.BLOWER_OPENING_ANGLE;
-        this.windParticleEmitter.setAngle({ min: Phaser.Math.RadToDeg(particleAngleMin), max: Phaser.Math.RadToDeg(particleAngleMax) });
-        this.windParticleEmitter.setSpeed({ min: 100, max: 500 });
-        this.windParticleEmitter.setScale(0.5);
+        const particleAngle = { min: Phaser.Math.RadToDeg(particleAngleMin), max: Phaser.Math.RadToDeg(particleAngleMax) };
+        this.windParticleEmitter = this.scene.add.particles(0, 0, 'particle'
+            ,{
+                lifespan: { min: 10, max: 500 },
+                speed: { min: 100, max: 500 },
+                emitting: false,
+                angle: particleAngle,
+                rotate: { min: -90, max: 90 },
+                scale: 0.8
+            }
+        );
+
+        this.windParticleEmitter.onParticleEmit((particel, emitter) => {
+           console.log(particel.scaleX);
+        });
+
+
+        // emit air particles
+        let blowerMuzzle = new Phaser.Math.Vector2(50, 0);
+        blowerMuzzle.setAngle(this.player.rotation);
+        this.windParticleEmitter.emitParticleAt(this.player.x + blowerMuzzle.x, this.player.y + blowerMuzzle.y);
 
         // move leafs
         for (let leaf of this.leafs) {
@@ -61,19 +71,24 @@ export class LeafBlowerJet {
 
 
     public update(): void {
-        this.windParticleEmitter.on = false;
         if (this.isBlowing) {
             this.switchBlowerSound(true);
             this.blow();
         }
         else {
+            // this.windParticleEmitter.emitting = false;
             this.switchBlowerSound(false);
         }
 
+        /*
         this.windParticleEmitter.forEachAlive((particle, particleEmitter) => {
-            particle.scaleX = Math.max(particle.lifeT, 0.5);
-            particle.scaleY = Math.max(particle.lifeT, 0.5);
+            particle.scaleX = Math.max(particle.lifeT *4.0, 0.8);
+            particle.scaleY = Math.max(particle.lifeT *4.0, 0.8);
         }, null);
+        */
+
+
+
     }
 
 
