@@ -23,9 +23,6 @@ export class LeafBlowerJet {
     }
 
     public create(): void {
-
-
-
         this.blowerSound = this.scene.sound.add('cleaner', { loop: true }) as Phaser.Sound.WebAudioSound;
         this.blowerSound.play({ volume: 0 });
     }

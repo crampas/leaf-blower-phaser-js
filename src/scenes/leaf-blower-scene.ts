@@ -15,7 +15,7 @@ const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
 
 export class LeafBlowerScene extends Phaser.Scene {
 
-    private cursorKeys: Phaser.Types.Input.Keyboard.CursorKeys;
+    private cursorKeys!: Phaser.Types.Input.Keyboard.CursorKeys;
     private obstacles: Phaser.Physics.Arcade.StaticGroup;
 
     private leafs: Phaser.Physics.Arcade.Sprite[] = [];
@@ -33,13 +33,15 @@ export class LeafBlowerScene extends Phaser.Scene {
 
     constructor() {
         super(sceneConfig);
-
-        this.sweeper = new RoadSweeper(this, this.leafs);
-        this.leafBlower = new LeafBlower(this, this.leafs);
-        this.weather = new Weather(this, this.leafs);
     }
 
     public preload(): void {
+        this.energy = 300;
+        this.leafs = [];
+        this.sweeper = new RoadSweeper(this, this.leafs);
+        this.leafBlower = new LeafBlower(this, this.leafs);
+        this.weather = new Weather(this, this.leafs);
+
         const fontSize = Math.min(this.game.canvas.width, 1024) / 32;
         this.text = this.add.text(fontSize, fontSize, 'Starting...')
                 .setFontSize(fontSize).setDepth(100).setScrollFactor(0);
@@ -54,6 +56,7 @@ export class LeafBlowerScene extends Phaser.Scene {
     }
 
     public create(): void {
+        console.log('LeafBlowerScene create');
 
         this.cursorKeys = this.input.keyboard.createCursorKeys();
 
@@ -63,10 +66,6 @@ export class LeafBlowerScene extends Phaser.Scene {
         this.cameras.main.setBounds(0, 0, 1024, 1024);
         this.cameras.main.x = Math.max((this.game.canvas.width - 1024) / 2, 0);
         this.cameras.main.y = Math.max((this.game.canvas.height - 1024) / 2, 0);
-
-        const fontSize = Math.min(this.game.canvas.width, 1024) / 32;
-        this.sweeperText = this.add.text(0, 0, '').setFontSize(fontSize)
-                .setFontSize(fontSize).setFontStyle('bold').setDepth(100);
 
         this.add.image(0, 0, 'background').setScale(1, 1).setOrigin(0, 0);
 
@@ -82,7 +81,7 @@ export class LeafBlowerScene extends Phaser.Scene {
         }
 
         this.leafBlower.create();
-        this.leafBlower.setVisibility(true);
+        this.leafBlower.setVisible(true);
         this.cameras.main.startFollow(this.leafBlower.sprite, true);
 
         this.obstacles = this.physics.add.staticGroup();
@@ -90,7 +89,6 @@ export class LeafBlowerScene extends Phaser.Scene {
         // this.add.rectangle(432, 208, 32, 32, 0x80ffffff);
         this.obstacles.add(obstacle1);        
         this.physics.add.collider(this.leafBlower.sprite, this.obstacles);
-
 
         this.sweeper.player = this.leafBlower.sprite;
         this.sweeper.create();
@@ -107,16 +105,16 @@ export class LeafBlowerScene extends Phaser.Scene {
 
         this.add.image(0, 0, 'foreground').setScale(1, 1).setOrigin(0, 0);
 
+        const fontSize = Math.min(this.game.canvas.width, 1024) / 32;
+        this.sweeperText = this.add.text(0, 0, '').setFontSize(fontSize)
+                .setFontSize(fontSize).setFontStyle('bold').setDepth(100);
         this.sweeperText.setVisible(false);
         this.sweeperText.setText('Pass doch auf ...');
 
         this.weather.create();
     }
 
-
-
     public update(): void {
-
         let playerNewRotation = 0;
         let playerNewVelocity = new Phaser.Math.Vector2(0, 0);
 
@@ -176,9 +174,8 @@ export class LeafBlowerScene extends Phaser.Scene {
             leaf.y = leaf.y > 1024 ? 0 : leaf.y;
             leaf.y = leaf.y < 0 ? 1024 : leaf.y;
 
-            const position = new Phaser.Math.Vector2(leaf.x, leaf.y);
-
-            if (Phaser.Math.Distance.BetweenPoints(position, lakePosition) < 100) {
+            const leafPosition = new Phaser.Math.Vector2(leaf.x, leaf.y);
+            if (Phaser.Math.Distance.BetweenPoints(leafPosition, lakePosition) < 100) {
                 leaf.setVisible(false);
             }
         });
@@ -187,7 +184,12 @@ export class LeafBlowerScene extends Phaser.Scene {
             this.sweeperText.setText('Strom ist aus ...  Feierabend!');
             this.sweeperText.setPosition(this.leafBlower.sprite.x - this.sweeperText.width / 2, 
                     this.leafBlower.sprite.y - (this.sweeperText.height * 2));
-            this.sweeperText.setVisible(true);        
+            this.sweeperText.setVisible(true);
+            
+            this.time.delayedCall(5000, () => {
+                this.game.sound.stopAll();
+                this.scene.start('Intro');
+            });
         }
     }
 

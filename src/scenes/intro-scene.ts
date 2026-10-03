@@ -97,6 +97,10 @@ export class IntroScene extends Phaser.Scene {
     }
 
     public preload(): void {
+        this.leafs = [];
+        this.leafBlowerList = [];
+        this.workflow = new Flow();
+
         this.load.image('intro-image', 'assets/leaf-blower-into.jpg');
         this.load.spritesheet('intro-leafs', 'assets/sprites/leaf-4.png', { frameWidth: 32, frameHeight: 32 });
 
@@ -166,7 +170,7 @@ export class IntroScene extends Phaser.Scene {
         });        
         this.workflow.createPart('blow', 60000, 'return').start(() => {
             this.leafBlowerList.forEach((blower, index) => {
-                blower.setVisibility(true);
+                blower.setVisible(true);
                 blower.sprite.setPosition(-150 + Math.random() * 100, 100 * index + 50);
                 blower.sprite.setCollideWorldBounds(false);
                 blower.sprite.setVelocityX(60);
@@ -204,6 +208,7 @@ export class IntroScene extends Phaser.Scene {
         })
 
         if (this.cursorKeys.space.isDown || this.input.activePointer.isDown) {
+            console.log('IntroScene start game');
             this.game.sound.stopAll();
             this.scene.start('LeafBlowerScene');
         }

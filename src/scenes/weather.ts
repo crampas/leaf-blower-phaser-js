@@ -2,7 +2,7 @@
 
 
 export class Weather {
-    private windParticleEmitter: Phaser.GameObjects.Particles.ParticleEmitter;
+    private windParticleEmitter?: Phaser.GameObjects.Particles.ParticleEmitter;
 
     public constructor(public scene: Phaser.Scene, public leafs: Phaser.Physics.Arcade.Sprite[]) {
     }

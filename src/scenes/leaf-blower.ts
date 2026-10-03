@@ -27,7 +27,7 @@ export class LeafBlower {
         this.leafBlowerJet.create();
     }
 
-    public setVisibility(visible: boolean) {
+    public setVisible(visible: boolean) {
         this.sprite.setVisible(visible);
     }
 

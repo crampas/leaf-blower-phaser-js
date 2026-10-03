@@ -2,14 +2,13 @@
 
 
 export class RoadSweeper {
-
-    private sweeperSlurp: Phaser.Sound.WebAudioSound;
-    private sweeperEngine: Phaser.Sound.WebAudioSound;
+    private sweeperSlurp!: Phaser.Sound.WebAudioSound;
+    private sweeperEngine!: Phaser.Sound.WebAudioSound;
 
     public collectedLeafs: number = 0;
 
-    public sprite: Phaser.Physics.Arcade.Sprite;
-    public player: Phaser.Physics.Arcade.Sprite;
+    public sprite!: Phaser.Physics.Arcade.Sprite;
+    public player!: Phaser.Physics.Arcade.Sprite;
 
     public constructor(public scene: Phaser.Scene, public leafs: Phaser.Physics.Arcade.Sprite[]) {
     }
@@ -22,13 +21,11 @@ export class RoadSweeper {
 
     public create(): void {
         this.sprite = this.scene.physics.add.sprite(370, 0, 'sweeper');
-        // this.sprite.setVelocityY(130);
 
         this.sweeperSlurp = this.scene.sound.add('slurp', {volume: 0.5}) as Phaser.Sound.WebAudioSound;
         this.sweeperEngine = this.scene.sound.add('sweeper-engine', {loop: true}) as Phaser.Sound.WebAudioSound;
 
         this.stop();
-        // this.scene.time.delayedCall(5000, () => this.start());
     }
 
     private start() {
