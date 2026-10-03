@@ -27,5 +27,7 @@ const gameConfig: Phaser.Types.Core.GameConfig = {
 export const game = new Phaser.Game(gameConfig);
 
 window.addEventListener('resize', () => {
-  game.scale.refresh();
+  console.log('Resizing game to', window.innerWidth, window.innerHeight);
+  game.scale.resize(window.innerWidth, window.innerHeight); 
+  game.scale.refresh
 });

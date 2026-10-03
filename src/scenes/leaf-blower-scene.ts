@@ -35,13 +35,15 @@ export class LeafBlowerScene extends Phaser.Scene {
         super(sceneConfig);
     }
 
-    public preload(): void {
+    public init(): void {
         this.energy = 300;
         this.leafs = [];
         this.sweeper = new RoadSweeper(this, this.leafs);
         this.leafBlower = new LeafBlower(this, this.leafs);
         this.weather = new Weather(this, this.leafs);
+    }
 
+    public preload(): void {
         const fontSize = Math.min(this.game.canvas.width, 1024) / 32;
         this.text = this.add.text(fontSize, fontSize, 'Starting...')
                 .setFontSize(fontSize).setDepth(100).setScrollFactor(0);
@@ -61,6 +63,14 @@ export class LeafBlowerScene extends Phaser.Scene {
         this.cursorKeys = this.input.keyboard.createCursorKeys();
 
         this.playerAh = this.sound.add('playerAh');
+
+        this.scale.on('resize', () => {
+            this.cameras.main.x = Math.max((this.game.canvas.width - 1024) / 2, 0);
+            this.cameras.main.y = Math.max((this.game.canvas.height - 1024) / 2, 0);
+            this.cameras.main.setSize(this.game.canvas.width, this.game.canvas.height);
+            this.cameras.main.scrollX = this.leafBlower.sprite.x - 1024 / 2;
+            this.cameras.main.scrollY = this.leafBlower.sprite.y - 1024 / 2;
+        });
 
         this.physics.world.setBounds(0, 0, 1024, 1024);
         this.cameras.main.setBounds(0, 0, 1024, 1024);

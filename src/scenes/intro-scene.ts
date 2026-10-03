@@ -112,10 +112,19 @@ export class IntroScene extends Phaser.Scene {
     }
 
     public create(): void {
+        const count = this.children.length;
+        console.log('IntroScene create, children count:', count);
+
         this.cursorKeys = this.input.keyboard.createCursorKeys();
 
-        const image = this.add.image(0, 0, 'intro-image').setOrigin(0, 0);
+        this.scale.on('resize', (gameSize) => {
+            // this.updatePositions(gameSize);
+        });
 
+        this.input.on('pointerdown', () => this.startGame());
+        this.cursorKeys.space.on('down', () => this.startGame());
+
+        const image = this.add.image(0, 0, 'intro-image').setOrigin(0, 0);
         const scale = Math.max(this.game.canvas.width / image.width, this.game.canvas.height / image.height);
         image.setScale(scale);
 
@@ -207,12 +216,18 @@ export class IntroScene extends Phaser.Scene {
             }
         })
 
-        if (this.cursorKeys.space.isDown || this.input.activePointer.isDown) {
-            console.log('IntroScene start game');
-            this.game.sound.stopAll();
-            this.scene.start('LeafBlowerScene');
-        }
+        // if (this.cursorKeys.space.isDown || this.input.activePointer.isDown) {
+        //     console.log('IntroScene start game');
+        //     this.game.sound.stopAll();
+        //     this.scene.start('LeafBlowerScene');
+        // }
     }
+
+    private startGame() {
+        console.log('IntroScene start game');
+        this.game.sound.stopAll();
+        this.scene.start('LeafBlowerScene');
+    } 
     
 }  
 
