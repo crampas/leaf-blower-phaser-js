@@ -1,6 +1,11 @@
 import * as Phaser from 'phaser';
 import { RoadSweeper } from './road-sweeper';
 import { LeafBlower } from './leaf-blower';
+import { Weather } from './weather';
+
+
+const leafCount = 5000;
+
 
 const sceneConfig: Phaser.Types.Scenes.SettingsConfig = {
     active: false,
@@ -19,10 +24,11 @@ export class LeafBlowerScene extends Phaser.Scene {
 
     private playerAh: Phaser.Sound.BaseSound;
 
-    private energy: number = 3000;
+    private energy: number = 300;
 
     private sweeper: RoadSweeper;
     private leafBlower: LeafBlower;
+    private weather: Weather;
 
 
     constructor() {
@@ -30,19 +36,21 @@ export class LeafBlowerScene extends Phaser.Scene {
 
         this.sweeper = new RoadSweeper(this, this.leafs);
         this.leafBlower = new LeafBlower(this, this.leafs);
+        this.weather = new Weather(this, this.leafs);
     }
 
     public preload(): void {
         const fontSize = Math.min(this.game.canvas.width, 1024) / 32;
-        this.text = this.add.text(fontSize, fontSize, 'Starting...').setFontSize(fontSize).setDepth(100).setScrollFactor(0);
-        this.sweeperText = this.add.text(0, 0, '').setFontSize(fontSize).setDepth(100);
-
+        this.text = this.add.text(fontSize, fontSize, 'Starting...')
+                .setFontSize(fontSize).setDepth(100).setScrollFactor(0);
+        
         this.load.image('background', 'assets/tiles/garden/garden-01-background.png');
         this.load.image('foreground', 'assets/tiles/garden/garden-01-foreground.png');
         this.load.spritesheet('leafs', 'assets/sprites/leaf-4.png', { frameWidth: 32, frameHeight: 32 });
 
         this.sweeper.preload();
         this.leafBlower.preload();
+        this.weather.preload();
     }
 
     public create(): void {
@@ -56,12 +64,15 @@ export class LeafBlowerScene extends Phaser.Scene {
         this.cameras.main.x = Math.max((this.game.canvas.width - 1024) / 2, 0);
         this.cameras.main.y = Math.max((this.game.canvas.height - 1024) / 2, 0);
 
+        const fontSize = Math.min(this.game.canvas.width, 1024) / 32;
+        this.sweeperText = this.add.text(0, 0, '').setFontSize(fontSize)
+                .setFontSize(fontSize).setFontStyle('bold').setDepth(100);
 
         this.add.image(0, 0, 'background').setScale(1, 1).setOrigin(0, 0);
 
-        for (let index = 0; index < 2000; index++) {
+        for (let index = 0; index < leafCount; index++) {
             const leaf = this.physics.add.sprite(Math.random() * 1024, Math.random() * 1024, "leafs", index % 4);
-            leaf.setCollideWorldBounds(true);
+            leaf.setCollideWorldBounds(false);
             leaf.setDrag(100, 100);
             leaf.setFriction(1000, 1000);
             leaf.setMass(0.01);
@@ -71,6 +82,7 @@ export class LeafBlowerScene extends Phaser.Scene {
         }
 
         this.leafBlower.create();
+        this.leafBlower.setVisibility(true);
         this.cameras.main.startFollow(this.leafBlower.sprite, true);
 
         this.obstacles = this.physics.add.staticGroup();
@@ -96,8 +108,9 @@ export class LeafBlowerScene extends Phaser.Scene {
         this.add.image(0, 0, 'foreground').setScale(1, 1).setOrigin(0, 0);
 
         this.sweeperText.setVisible(false);
-        this.sweeperText.setText('Pass doch auf du Depp ...');
+        this.sweeperText.setText('Pass doch auf ...');
 
+        this.weather.create();
     }
 
 
@@ -141,6 +154,7 @@ export class LeafBlowerScene extends Phaser.Scene {
 
         this.leafBlower.update();
         this.sweeper.update();
+        this.weather.update();
 
         this.text.setText([
             'Leafs: ' + this.sweeper.collectedLeafs.toString(),
@@ -152,8 +166,30 @@ export class LeafBlowerScene extends Phaser.Scene {
             // `Camera: ${this.cameras.main.scrollX}, ${this.cameras.main.scrollY}`,
         ]);
 
-    }
+        const lakePosition = new Phaser.Math.Vector2(200, 200);
+        this.leafs.forEach(leaf => {
+            if (leaf.scale > 1.0) {
+                leaf.setScale((leaf.scale - 1.0) * 0.99 + 1.0);
+            }
+            leaf.x = leaf.x > 1024 ? 0 : leaf.x;
+            leaf.x = leaf.x < 0 ? 1024 : leaf.x;
+            leaf.y = leaf.y > 1024 ? 0 : leaf.y;
+            leaf.y = leaf.y < 0 ? 1024 : leaf.y;
 
+            const position = new Phaser.Math.Vector2(leaf.x, leaf.y);
+
+            if (Phaser.Math.Distance.BetweenPoints(position, lakePosition) < 100) {
+                leaf.setVisible(false);
+            }
+        });
+
+        if (this.energy <= 0) {
+            this.sweeperText.setText('Strom ist aus ...  Feierabend!');
+            this.sweeperText.setPosition(this.leafBlower.sprite.x - this.sweeperText.width / 2, 
+                    this.leafBlower.sprite.y - (this.sweeperText.height * 2));
+            this.sweeperText.setVisible(true);        
+        }
+    }
 
 }
 

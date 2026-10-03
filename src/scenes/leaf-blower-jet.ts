@@ -46,9 +46,9 @@ export class LeafBlowerJet {
             }
         );
 
-        this.windParticleEmitter.onParticleEmit((particel, emitter) => {
-           console.log(particel.scaleX);
-        });
+        // this.windParticleEmitter.onParticleEmit((particel, emitter) => {
+        //    console.log(particel.scaleX);
+        // });
 
 
         // emit air particles

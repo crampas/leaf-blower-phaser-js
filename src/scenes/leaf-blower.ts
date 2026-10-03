@@ -19,11 +19,16 @@ export class LeafBlower {
     }
 
     public create(): void {
-        this.sprite = this.scene.physics.add.sprite(450, 400, 'player');
+        this.sprite = this.scene.physics.add.sprite(450, 100, 'player');
+        this.sprite.setVisible(false);
         this.sprite.setCollideWorldBounds(true);
 
         this.leafBlowerJet.player = this.sprite;
         this.leafBlowerJet.create();
+    }
+
+    public setVisibility(visible: boolean) {
+        this.sprite.setVisible(visible);
     }
 
     public update(): void {
@@ -32,8 +37,14 @@ export class LeafBlower {
     }
 
     public move(playerNewVelocity: Phaser.Math.Vector2, playerNewRotation: number) {
+        const lakePosition = new Phaser.Math.Vector2(200, 200);
+        let handicap = 1;
+        if (Phaser.Math.Distance.BetweenPoints(this.sprite, lakePosition) < 100) {
+            handicap = 0.3;
+        }
+
         playerNewVelocity.rotate(this.sprite.rotation);
-        this.sprite.setVelocity(playerNewVelocity.x, playerNewVelocity.y);    
+        this.sprite.setVelocity(playerNewVelocity.x * handicap, playerNewVelocity.y * handicap);    
         this.sprite.setRotation(Phaser.Math.Angle.Wrap(this.sprite.rotation + playerNewRotation));
     }
 

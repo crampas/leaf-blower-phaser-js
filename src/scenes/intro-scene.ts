@@ -166,6 +166,7 @@ export class IntroScene extends Phaser.Scene {
         });        
         this.workflow.createPart('blow', 60000, 'return').start(() => {
             this.leafBlowerList.forEach((blower, index) => {
+                blower.setVisibility(true);
                 blower.sprite.setPosition(-150 + Math.random() * 100, 100 * index + 50);
                 blower.sprite.setCollideWorldBounds(false);
                 blower.sprite.setVelocityX(60);

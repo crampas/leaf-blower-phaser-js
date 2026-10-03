@@ -21,19 +21,38 @@ export class RoadSweeper {
     }
 
     public create(): void {
-        this.sprite = this.scene.physics.add.sprite(370, 2000, 'sweeper');
-        this.sprite.setVelocityY(130);
+        this.sprite = this.scene.physics.add.sprite(370, 0, 'sweeper');
+        // this.sprite.setVelocityY(130);
 
-        this.sweeperSlurp = this.scene.sound.add('slurp') as Phaser.Sound.WebAudioSound;
+        this.sweeperSlurp = this.scene.sound.add('slurp', {volume: 0.5}) as Phaser.Sound.WebAudioSound;
         this.sweeperEngine = this.scene.sound.add('sweeper-engine', {loop: true}) as Phaser.Sound.WebAudioSound;
+
+        this.stop();
+        // this.scene.time.delayedCall(5000, () => this.start());
     }
 
-    public update(): void {
+    private start() {
+        console.log('RoadSweeper start');
+        this.sprite.setVisible(true);
+        this.sprite.y = 0;
+        this.sweeperEngine.play();
+        this.sprite.setVelocityY(130);
+    }
 
-        if (this.sprite.y > 1050) {
-            this.sprite.y = 0;
-            this.sweeperEngine.play();
+    private stop() {
+        this.sprite.setVisible(false);
+        this.sprite.y = -500;
+        this.sprite.setVelocityY(0);
+        this.sweeperEngine.stop();
+        this.scene.time.delayedCall(Phaser.Math.Between(5000, 15000), () => this.start());
+    }
+
+
+    public update(): void {
+        if (this.sprite.y > 2000) {
+            this.stop()
         }
+
         const playerSweeperDistance = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.sprite.x, this.sprite.y);
         this.sweeperEngine.setVolume(1 / playerSweeperDistance * 100);
 
@@ -43,12 +62,28 @@ export class RoadSweeper {
             }
             const sweeperDistance = Phaser.Math.Distance.Between(this.sprite.x, this.sprite.y, leaf.x, leaf.y);
             if (sweeperDistance < 40) {
-                leaf.setVisible(false);
-                this.sweeperSlurp.play();
-                this.collectedLeafs++;
+                this.grapLeaf(leaf);
             }
         }
-
     }
 
+    private grapLeaf(leaf: Phaser.Physics.Arcade.Sprite) {
+        leaf.setVisible(false);
+        this.sweeperSlurp.play();
+        this.collectedLeafs++;
+        if (Phaser.Math.FloatBetween(0, 1) > 0.8) {
+            this.ejectLeaf(leaf);
+        }
+    }
+
+    private ejectLeaf(leaf: Phaser.Physics.Arcade.Sprite) {
+        leaf.setPosition(this.sprite.x, this.sprite.y - 50);
+        const angle = Phaser.Math.FloatBetween(20, 150);
+        const velocity = this.scene.physics.velocityFromAngle(angle, Phaser.Math.Between(100, 300));
+        leaf.setVelocity(velocity.x, velocity.y);
+        // leaf.setPosition(Math.random() * this.scene.game.canvas.width, 
+        //         Math.random() * this.scene.game.canvas.height);           
+        leaf.setScale(Phaser.Math.FloatBetween(1, 1.5));
+        leaf.setVisible(true);
+    }
 }
